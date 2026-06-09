@@ -269,6 +269,19 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
     return this.pushName;
   }
 
+  async requestPairingCode(phoneNumber: string): Promise<string> {
+    if (!this.client) {
+      throw new Error('Session is not initialized. Call start first.');
+    }
+    if (this.status === EngineStatus.READY) {
+      throw new Error('Session is already authenticated.');
+    }
+    const cleanNumber = phoneNumber.replace(/\D/g, '');
+    this.logger.log(`Requesting pairing code for number: ${cleanNumber}`);
+    const code = await (this.client as unknown as { requestPairingCode: (n: string) => Promise<string> }).requestPairingCode(cleanNumber);
+    return code;
+  }
+
   async sendTextMessage(chatId: string, text: string): Promise<MessageResult> {
     this.ensureReady();
     const msg = await this.client!.sendMessage(chatId, text);

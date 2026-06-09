@@ -464,6 +464,25 @@ export class SessionService implements OnModuleDestroy, OnModuleInit {
     return this.engines.get(id);
   }
 
+  async getPairingCode(id: string, phoneNumber: string): Promise<string> {
+    await this.findOne(id); // Verify session exists
+    const engine = this.engines.get(id);
+
+    if (!engine) {
+      throw new BadRequestException('Session is not started. Call POST /sessions/:id/start first.');
+    }
+
+    const adapter = engine as unknown as { requestPairingCode: (n: string) => Promise<string> };
+    if (typeof adapter.requestPairingCode !== 'function') {
+      throw new BadRequestException('Pairing code not supported by the current engine.');
+    }
+
+    const cleanNumber = phoneNumber.replace(/\D/g, '');
+    const code = await adapter.requestPairingCode(cleanNumber);
+    this.logger.log(`Pairing code generated for session ${id}`, { sessionId: id });
+    return code;
+  }
+
   async getGroups(id: string): Promise<{ id: string; name: string }[]> {
     await this.findOne(id); // Verify session exists
     const engine = this.engines.get(id);

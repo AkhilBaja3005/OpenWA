@@ -153,6 +153,24 @@ export class SessionController {
     return qrCode;
   }
 
+  @Post(':id/pairing-code')
+  @RequireRole(ApiKeyRole.OPERATOR)
+  @ApiOperation({
+    summary: 'Request a phone number pairing code (alternative to QR scan)',
+    description: 'Returns an 8-digit code to enter in WhatsApp → Linked Devices → Link with phone number',
+  })
+  @ApiParam({ name: 'id', description: 'Session ID' })
+  @ApiResponse({ status: 200, description: 'Pairing code generated' })
+  @ApiResponse({ status: 400, description: 'Session not started or already authenticated' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async getPairingCode(
+    @Param('id') id: string,
+    @Body() body: { phoneNumber: string },
+  ): Promise<{ pairingCode: string }> {
+    const code = await this.sessionService.getPairingCode(id, body.phoneNumber);
+    return { pairingCode: code };
+  }
+
   @Get(':id/groups')
   @ApiOperation({ summary: 'Get all groups for a session' })
   @ApiParam({ name: 'id', description: 'Session ID' })
